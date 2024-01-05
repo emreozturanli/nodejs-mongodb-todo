@@ -1,8 +1,11 @@
+const Todo = require("../models/todos");
+
 const getAllTodos = (req, res) => {
 	res.send("all todos here");
 };
-const createTodo = (req, res) => {
-	res.json(req.body);
+const createTodo = async (req, res) => {
+	const todo = await Todo.create(req.body);
+	res.status(201).json({ todo });
 };
 const getTodoById = (req, res) => {
 	res.send("single todo here");
