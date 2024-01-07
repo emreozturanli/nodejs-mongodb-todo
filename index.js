@@ -9,7 +9,7 @@ const errorHandler = require("./middlewares/error-handler");
 
 // env
 require("dotenv").config();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 const DBKEY = process.env.MONGODB_ATLAS_KEY;
 
 app.use(express.json());

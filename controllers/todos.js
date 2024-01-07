@@ -2,49 +2,91 @@ const Todo = require("../models/todos");
 const asyncWrapper = require("../middlewares/async-wrapper");
 const { createCustomError } = require("../utils/customApiError");
 
-const getAllTodos = asyncWrapper(async (req, res) => {
+const getAllTodos = asyncWrapper(async (req, res, next) => {
 	const todos = await Todo.find({});
 	if (todos) {
-		res.status(200).json({ todos });
+		res.status(200).send({
+			error: false,
+			data: todos,
+			message: "Todos successfully fetched",
+			todoTotal: todos.length,
+		});
 	} else {
+		res.statusCode = 400;
 		return next(createCustomError(res.statusCode, "No record found"));
 	}
 });
 
-const createTodo = asyncWrapper(async (req, res) => {
-	const todo = await Todo.create(req.body);
+const createTodo = asyncWrapper(async (req, res, next) => {
+	const todo = await Todo.create(req.body).catch((error) => {
+		if (error.name === "ValidationError") {
+			res.statusCode = 400;
+			return next(createCustomError(res.statusCode, error.name, error.message, undefined, req.body));
+		} else {
+			res.statusCode = 404;
+			return next(createCustomError(res.statusCode, "No record found", undefined, undefined, req.body));
+		}
+	});
 	if (todo) {
-		res.status(201).json({ todo });
-	} else {
-		return next(createCustomError(res.statusCode, "No record found"));
+		res.status(201).send({
+			error: false,
+			payload: req.body,
+			message: "Todo successfully created",
+			data: todo,
+		});
 	}
 });
 
-const getTodoById = asyncWrapper(async (req, res) => {
+const getTodoById = asyncWrapper(async (req, res, next) => {
 	const todo = await Todo.findOne({ _id: req.params.id });
-	if (!todo) {
-		return res.status(404).send({ message: "todo not found" });
+	if (todo) {
+		res.status(200).send({
+			error: false,
+			message: "Todo successfully fetched",
+			data: todo,
+		});
+	} else {
+		res.statusCode = 404;
+		return next(createCustomError(res.statusCode, "No record found", undefined, req.params.id, req.body));
 	}
-	res.status(200).send(todo);
 });
 
-const updateTodoById = asyncWrapper(async (req, res) => {
+const updateTodoById = asyncWrapper(async (req, res, next) => {
 	const todo = await Todo.findOneAndUpdate({ _id: req.params.id }, req.body, {
 		new: true,
 		runValidators: true,
+	}).catch((error) => {
+		if (error.name === "ValidationError") {
+			res.statusCode = 400;
+			return next(createCustomError(res.statusCode, error.name, error.message, undefined, req.body));
+		} else {
+			res.statusCode = 404;
+			return next(createCustomError(res.statusCode, "No record found", undefined, undefined, req.body));
+		}
 	});
-	if (!todo) {
-		return res.status(404).send({ message: "todo not found" });
+	if (todo) {
+		res.status(202).send({
+			error: false,
+			payload: req.body,
+			message: "Todo successfully updated",
+			data: todo,
+		});
 	}
-	res.status(200).send(todo);
 });
 
-const deleteTodo = asyncWrapper(async (req, res) => {
-	const todo = await Todo.deleteOne({ _id: req.params.id });
-	if (!todo) {
-		return res.status(404).send({ message: "todo not found" });
+const deleteTodo = asyncWrapper(async (req, res, next) => {
+	const result = await Todo.deleteOne({ _id: req.params.id });
+	console.log(result);
+	if (result && result.acknowledged && result.deletedCount > 0) {
+		res.status(200).send({
+			error: false,
+			message: "Todo deleted successfully",
+			id: req.params.id,
+		});
+	} else {
+		res.statusCode = 404;
+		return next(createCustomError(res.statusCode, "No record found", undefined, req.params.id, undefined));
 	}
-	res.status(200).send(todo);
 });
 
 module.exports = {
