@@ -1,8 +1,8 @@
 const Todo = require("../models/todos");
-const asyncWrapper = require("../middlewares/async-wrapper");
+// const asyncWrapper = require("../middlewares/async-wrapper");
 const { createCustomError } = require("../utils/customApiError");
 
-const getAllTodos = asyncWrapper(async (req, res, next) => {
+const getAllTodos = async (req, res, next) => {
 	const todos = await Todo.find({});
 	if (todos) {
 		res.status(200).send({
@@ -15,9 +15,9 @@ const getAllTodos = asyncWrapper(async (req, res, next) => {
 		res.statusCode = 400;
 		return next(createCustomError(res.statusCode, "No record found"));
 	}
-});
+};
 
-const createTodo = asyncWrapper(async (req, res, next) => {
+const createTodo = async (req, res, next) => {
 	const todo = await Todo.create(req.body).catch((error) => {
 		if (error.name === "ValidationError") {
 			res.statusCode = 400;
@@ -35,9 +35,9 @@ const createTodo = asyncWrapper(async (req, res, next) => {
 			data: todo,
 		});
 	}
-});
+};
 
-const getTodoById = asyncWrapper(async (req, res, next) => {
+const getTodoById = async (req, res, next) => {
 	const todo = await Todo.findOne({ _id: req.params.id });
 	if (todo) {
 		res.status(200).send({
@@ -49,9 +49,9 @@ const getTodoById = asyncWrapper(async (req, res, next) => {
 		res.statusCode = 404;
 		return next(createCustomError(res.statusCode, "No record found", undefined, req.params.id, req.body));
 	}
-});
+};
 
-const updateTodoById = asyncWrapper(async (req, res, next) => {
+const updateTodoById = async (req, res, next) => {
 	const todo = await Todo.findOneAndUpdate({ _id: req.params.id }, req.body, {
 		new: true,
 		runValidators: true,
@@ -72,9 +72,9 @@ const updateTodoById = asyncWrapper(async (req, res, next) => {
 			data: todo,
 		});
 	}
-});
+};
 
-const deleteTodo = asyncWrapper(async (req, res, next) => {
+const deleteTodo = async (req, res, next) => {
 	const result = await Todo.deleteOne({ _id: req.params.id });
 	console.log(result);
 	if (result && result.acknowledged && result.deletedCount > 0) {
@@ -87,7 +87,7 @@ const deleteTodo = asyncWrapper(async (req, res, next) => {
 		res.statusCode = 404;
 		return next(createCustomError(res.statusCode, "No record found", undefined, req.params.id, undefined));
 	}
-});
+};
 
 module.exports = {
 	getAllTodos,

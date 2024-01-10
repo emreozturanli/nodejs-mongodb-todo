@@ -7,6 +7,8 @@ const connectMongodb = require("./db/connect");
 const notFound = require("./middlewares/not-found");
 const errorHandler = require("./middlewares/error-handler");
 
+require("express-async-errors");
+
 // env
 require("dotenv").config();
 const PORT = process.env.PORT || 3000;
